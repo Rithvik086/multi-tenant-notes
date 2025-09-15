@@ -186,13 +186,14 @@ enum Plan {
    ```
    DATABASE_URL="postgresql://..."
    JWT_SECRET="your-secret-key"
+    NEXT_PUBLIC_APP_URL="http://localhost:3000 or to your domain"
    ```
 
 3. **Database Setup**
 
    ```bash
    npx prisma migrate dev
-   npx prisma db seed
+   npx tsx prisma/seed.ts   
    ```
 
 4. **Run Development Server**
