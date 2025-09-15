@@ -61,6 +61,7 @@ This application uses a **shared schema with tenant ID column** approach for mul
 - User invitation: `POST /api/users/invite` (Admin only)
 - CORS enabled for automated testing
 - Responsive frontend with login/logout and notes management
+- Simple invitation flow (admin generates link, invitee sets password)
 
 ## API Endpoints
 
@@ -80,7 +81,9 @@ This application uses a **shared schema with tenant ID column** approach for mul
 ### Admin Only
 
 - `POST /api/tenants/[slug]/upgrade` - Upgrade tenant subscription
-- `POST /api/users/invite` - Invite new user to tenant
+- `POST /api/auth/invite` - Generate invitation link (Admin)
+- `GET /api/auth/accept-invite?token=...` - Validate invitation token
+- `POST /api/auth/accept-invite` - Accept invitation (set password)
 
 ### System
 
@@ -227,6 +230,19 @@ enum Plan {
 ### Automated Testing
 
 The application includes CORS headers and proper error handling for automated test scripts.
+
+## Invitation Flow (Concise)
+
+1. Admin enters email + selects role (Member/Admin) on dashboard.
+2. App returns an invitation link (JWT token embedded) shown on the page.
+3. Share the link. Opening it loads the Accept Invite page.
+4. Invitee sets a password and submits.
+5. Account is created in the inviter's tenant and they are logged in.
+
+Notes:
+- Token expires in 7 days.
+- If the email already exists, invitation is rejected.
+- Environment (optional): set `NEXT_PUBLIC_APP_URL` for correct link domain.
 
 ## Project Structure
 

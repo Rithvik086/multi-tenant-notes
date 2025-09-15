@@ -22,8 +22,9 @@ export default function Dashboard() {
     plan: string;
   } | null>(null);
   const [noteForm, setNoteForm] = useState({ title: "", content: "" });
-  const [inviteForm, setInviteForm] = useState({ email: "", role: "USER" });
+  const [inviteForm, setInviteForm] = useState({ email: "", role: "MEMBER" });
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [lastInvitationLink, setLastInvitationLink] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -109,8 +110,9 @@ export default function Dashboard() {
       });
 
       if (response.ok) {
-        setInviteForm({ email: "", role: "USER" });
-        alert("User invited successfully!");
+        const data = await response.json();
+        setLastInvitationLink(data.invitationLink);
+        setInviteForm({ email: "", role: "MEMBER" });
       } else {
         const data = await response.json();
         setError(data.error || "Failed to invite user");
@@ -305,7 +307,7 @@ export default function Dashboard() {
                     }
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
                   >
-                    <option value="USER">User</option>
+                    <option value="MEMBER">Member</option>
                     <option value="ADMIN">Admin</option>
                   </select>
                 </div>
@@ -318,6 +320,43 @@ export default function Dashboard() {
                 {inviteLoading ? "Inviting..." : "Send Invitation"}
               </button>
             </form>
+            {lastInvitationLink && (
+              <div className="mt-4 p-4 bg-white border border-blue-200 rounded-md space-y-2">
+                <p className="text-sm text-blue-900 font-medium flex items-center justify-between">
+                  Invitation Link Generated
+                  <button
+                    onClick={() => setLastInvitationLink(null)}
+                    className="text-xs text-blue-500 hover:text-blue-700"
+                  >
+                    Clear
+                  </button>
+                </p>
+                <div className="flex flex-col space-y-2">
+                  <code className="block w-full break-all text-xs bg-blue-50 text-blue-800 p-2 rounded">
+                    {lastInvitationLink}
+                  </code>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(lastInvitationLink);
+                      }}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-3 py-2 rounded"
+                    >
+                      Copy Link
+                    </button>
+                    <button
+                      onClick={() => window.open(lastInvitationLink, "_blank")}
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium px-3 py-2 rounded"
+                    >
+                      Open Page
+                    </button>
+                  </div>
+                </div>
+                <p className="text-xs text-blue-700">
+                  Share this link with the invited user. They can set their password and finish signup.
+                </p>
+              </div>
+            )}
             <div className="mt-4 text-sm text-blue-800">
               <p>
                 <strong>How invitations work:</strong>
