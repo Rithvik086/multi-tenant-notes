@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 
 interface Note {
@@ -28,11 +28,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    checkAuthAndFetchData();
-  }, []);
-
-  const checkAuthAndFetchData = async () => {
+  const checkAuthAndFetchData = useCallback(async () => {
     try {
       // Fetch user profile first
       const profileResponse = await fetch("/api/auth/profile");
@@ -64,7 +60,12 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    // Run once on mount; dependencies handled via useCallback
+    void checkAuthAndFetchData();
+  }, [checkAuthAndFetchData]);
 
   const fetchNotes = async () => {
     try {
@@ -115,7 +116,7 @@ export default function Dashboard() {
         setError(data.error || "Failed to invite user");
       }
     } catch (err) {
-      setError("Failed to invite user");
+      setError(`Failed to invite user${err ? ": " + String(err) : ""}`);
     } finally {
       setInviteLoading(false);
     }
@@ -143,7 +144,7 @@ export default function Dashboard() {
         setError(data.error || "Failed to create note");
       }
     } catch (err) {
-      setError("Failed to create note");
+      setError("Failed to create note" + (err ? ": " + String(err) : ""));
     }
   };
 
@@ -187,7 +188,7 @@ export default function Dashboard() {
         setError(data.error || "Upgrade failed");
       }
     } catch (err) {
-      setError("Upgrade failed");
+      setError("Upgrade failed" + (err ? ": " + String(err) : ""));
     }
   };
 

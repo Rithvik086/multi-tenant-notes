@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getAuthUser } from "@/lib/auth";
 
 // GET /api/auth/profile → get current user profile
-export async function GET(req: NextRequest) {
+export async function GET() {
     try {
         const user = await getAuthUser<{ userId: string; tenantId: string; role: string }>();
         if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

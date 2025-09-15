@@ -19,6 +19,7 @@ export default function RootPage() {
         }
       } catch (err) {
         // Error or not authenticated, redirect to login
+        console.error("Auth check error:", err);
         router.push("/login");
       }
     };
