@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 interface InviteInfo {
@@ -10,7 +10,7 @@ interface InviteInfo {
   invitedBy: string;
 }
 
-export default function AcceptInvitePage() {
+function AcceptInviteInner() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
   const router = useRouter();
@@ -175,5 +175,17 @@ export default function AcceptInvitePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AcceptInvitePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-600">Loading...</div>
+      </div>
+    }>
+      <AcceptInviteInner />
+    </Suspense>
   );
 }
