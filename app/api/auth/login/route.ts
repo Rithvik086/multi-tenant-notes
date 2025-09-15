@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { signJwt, setAuthCookie } from "@/lib/auth";
-import { use } from "react";
+
 
 export async function POST(req: Request) {
     try {
