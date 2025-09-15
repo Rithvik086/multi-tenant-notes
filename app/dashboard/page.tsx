@@ -10,13 +10,20 @@ interface Note {
   createdAt: string;
 }
 
-export default function DashboardPage() {
+export default function Dashboard() {
   const [notes, setNotes] = useState<Note[]>([]);
+  const [userProfile, setUserProfile] = useState<{
+    email: string;
+    role: string;
+    tenant: { name: string; slug: string; plan: string };
+  } | null>(null);
   const [tenantInfo, setTenantInfo] = useState<{
     name: string;
     plan: string;
   } | null>(null);
   const [noteForm, setNoteForm] = useState({ title: "", content: "" });
+  const [inviteForm, setInviteForm] = useState({ email: "", role: "USER" });
+  const [inviteLoading, setInviteLoading] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -27,14 +34,26 @@ export default function DashboardPage() {
 
   const checkAuthAndFetchData = async () => {
     try {
-      // Check if user is authenticated by fetching notes
-      const response = await fetch("/api/notes");
-      if (response.ok) {
-        const notesData = await response.json();
+      // Fetch user profile first
+      const profileResponse = await fetch("/api/auth/profile");
+      if (!profileResponse.ok) {
+        router.push("/login");
+        return;
+      }
+
+      const profileData = await profileResponse.json();
+      setUserProfile(profileData);
+      setTenantInfo({
+        name: profileData.tenant.name,
+        plan: profileData.tenant.plan,
+      });
+
+      // Then fetch notes
+      const notesResponse = await fetch("/api/notes");
+      if (notesResponse.ok) {
+        const notesData = await notesResponse.json();
         setNotes(notesData);
-        setTenantInfo({ name: "Current Tenant", plan: "FREE" });
       } else {
-        // Not authenticated, redirect to login
         router.push("/login");
         return;
       }
@@ -67,8 +86,38 @@ export default function DashboardPage() {
       router.push("/login");
     } catch (err) {
       console.error("Logout failed:", err);
-      // Force redirect even if logout API fails
       router.push("/login");
+    }
+  };
+
+  const inviteUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inviteForm.email.trim()) return;
+
+    setInviteLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/auth/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: inviteForm.email,
+          role: inviteForm.role,
+        }),
+      });
+
+      if (response.ok) {
+        setInviteForm({ email: "", role: "USER" });
+        alert("User invited successfully!");
+      } else {
+        const data = await response.json();
+        setError(data.error || "Failed to invite user");
+      }
+    } catch (err) {
+      setError("Failed to invite user");
+    } finally {
+      setInviteLoading(false);
     }
   };
 
@@ -112,14 +161,24 @@ export default function DashboardPage() {
   };
 
   const upgradeTenant = async () => {
+    if (!userProfile) return;
+
     try {
-      // We need to determine the tenant slug - for now using 'acme' as default
-      // In a real app, this would come from the user context
-      const response = await fetch("/api/tenants/acme/upgrade", {
-        method: "POST",
-      });
+      const response = await fetch(
+        `/api/tenants/${userProfile.tenant.slug}/upgrade`,
+        {
+          method: "POST",
+        }
+      );
       if (response.ok) {
-        setTenantInfo({ name: "Current Tenant", plan: "PRO" });
+        setTenantInfo({
+          name: userProfile.tenant.name,
+          plan: "PRO",
+        });
+        setUserProfile({
+          ...userProfile,
+          tenant: { ...userProfile.tenant, plan: "PRO" },
+        });
         setError("");
       } else if (response.status === 401) {
         router.push("/login");
@@ -136,8 +195,8 @@ export default function DashboardPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
     );
@@ -148,11 +207,50 @@ export default function DashboardPage() {
       <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Notes</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">My Notes</h1>
+            {userProfile && (
+              <div className="mt-2 flex items-center space-x-4 text-sm text-gray-600">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center">
+                    <span className="text-indigo-600 font-medium text-sm">
+                      {userProfile.email.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-medium">{userProfile.email}</span>
+                    <span className="mx-2">•</span>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        userProfile.role === "ADMIN"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-blue-100 text-blue-800"
+                      }`}
+                    >
+                      {userProfile.role}
+                    </span>
+                    <span className="mx-2">•</span>
+                    <span className="text-gray-500">
+                      {userProfile.tenant.name}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
           <div className="flex items-center space-x-4">
             {tenantInfo && (
               <span className="text-sm text-gray-600">
-                Plan: <span className="font-semibold">{tenantInfo.plan}</span>
+                Plan:{" "}
+                <span
+                  className={`font-semibold ${
+                    tenantInfo.plan === "PRO"
+                      ? "text-green-600"
+                      : "text-orange-600"
+                  }`}
+                >
+                  {tenantInfo.plan}
+                </span>
               </span>
             )}
             <button
@@ -163,6 +261,80 @@ export default function DashboardPage() {
             </button>
           </div>
         </div>
+
+        {/* Admin Invitation Section */}
+        {userProfile?.role === "ADMIN" && (
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-6 mb-6">
+            <h3 className="text-lg font-medium text-blue-900 mb-4">
+              Invite New Users
+            </h3>
+            <form onSubmit={inviteUser} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2">
+                  <label
+                    htmlFor="inviteEmail"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    id="inviteEmail"
+                    value={inviteForm.email}
+                    onChange={(e) =>
+                      setInviteForm({ ...inviteForm, email: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                    placeholder="user@example.com"
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="inviteRole"
+                    className="block text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Role
+                  </label>
+                  <select
+                    id="inviteRole"
+                    value={inviteForm.role}
+                    onChange={(e) =>
+                      setInviteForm({ ...inviteForm, role: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+                  >
+                    <option value="USER">User</option>
+                    <option value="ADMIN">Admin</option>
+                  </select>
+                </div>
+              </div>
+              <button
+                type="submit"
+                disabled={inviteLoading}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-6 py-2 rounded-md text-sm font-medium"
+              >
+                {inviteLoading ? "Inviting..." : "Send Invitation"}
+              </button>
+            </form>
+            <div className="mt-4 text-sm text-blue-800">
+              <p>
+                <strong>How invitations work:</strong>
+              </p>
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>
+                  An email invitation will be sent to the specified address
+                </li>
+                <li>The recipient clicks the invitation link in their email</li>
+                <li>They complete the signup process with their password</li>
+                <li>
+                  They are automatically added to your tenant with the selected
+                  role
+                </li>
+              </ul>
+            </div>
+          </div>
+        )}
 
         {/* Upgrade Banner */}
         {tenantInfo?.plan === "FREE" && notes.length >= 3 && (
@@ -204,7 +376,7 @@ export default function DashboardPage() {
                   <input
                     type="text"
                     id="title"
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     value={noteForm.title}
                     onChange={(e) =>
                       setNoteForm({ ...noteForm, title: e.target.value })
@@ -222,7 +394,7 @@ export default function DashboardPage() {
                   <textarea
                     id="content"
                     rows={4}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     value={noteForm.content}
                     onChange={(e) =>
                       setNoteForm({ ...noteForm, content: e.target.value })
