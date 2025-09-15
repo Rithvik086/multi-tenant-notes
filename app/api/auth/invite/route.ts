@@ -65,10 +65,10 @@ export async function POST(req: NextRequest) {
     // We want a 7 day expiry irrespective of default signJwt 1h; so call jwt directly? For now, reuse signJwt is limited to 1h. We'll sign manually here.
     // Instead of altering global signJwt, we import jsonwebtoken directly for custom exp.
 
-  // Sign manually WITHOUT passing expiresIn because we already include exp in payload
-  const jwt = (await import("jsonwebtoken")).default;
-  const JWT_SECRET = process.env.JWT_SECRET || "fallbacksecret";
-  const token = jwt.sign(invitationPayload, JWT_SECRET);
+    // Sign manually WITHOUT passing expiresIn because we already include exp in payload
+    const jwt = (await import("jsonwebtoken")).default;
+    const JWT_SECRET = process.env.JWT_SECRET || "fallbacksecret";
+    const token = jwt.sign(invitationPayload, JWT_SECRET);
 
     // Construct link (assuming accept-invite page at /auth/accept-invite?token=...)
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || "http://localhost:3000";

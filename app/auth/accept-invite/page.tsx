@@ -31,10 +31,12 @@ export default function AcceptInvitePage() {
     }
     const run = async () => {
       try {
-        const res = await fetch(`/api/auth/accept-invite?token=${encodeURIComponent(token)}`);
+        const res = await fetch(
+          `/api/auth/accept-invite?token=${encodeURIComponent(token)}`
+        );
         if (res.ok) {
           const data = await res.json();
-            setInviteInfo(data);
+          setInviteInfo(data);
         } else {
           const data = await res.json().catch(() => ({}));
           setError(data.error || "Invalid or expired invitation");
@@ -93,7 +95,9 @@ export default function AcceptInvitePage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="max-w-md w-full bg-white shadow rounded p-6 text-center">
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">Invitation Error</h1>
+          <h1 className="text-xl font-semibold text-gray-900 mb-2">
+            Invitation Error
+          </h1>
           <p className="text-gray-600 mb-4">{error}</p>
           <button
             onClick={() => router.push("/login")}
@@ -111,22 +115,29 @@ export default function AcceptInvitePage() {
       <div className="max-w-md w-full bg-white shadow rounded p-6">
         {success ? (
           <div className="text-center">
-            <h1 className="text-2xl font-semibold text-green-600 mb-2">Success!</h1>
+            <h1 className="text-2xl font-semibold text-green-600 mb-2">
+              Success!
+            </h1>
             <p className="text-gray-600">Redirecting to dashboard...</p>
           </div>
         ) : (
           <>
-            <h1 className="text-2xl font-semibold text-gray-900 mb-1">Accept Invitation</h1>
+            <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+              Accept Invitation
+            </h1>
             {inviteInfo && (
               <p className="text-sm text-gray-600 mb-4">
-                You were invited to <span className="font-medium">{inviteInfo.tenantName}</span> as a
-                {" "}
-                <span className="font-medium">{inviteInfo.role}</span> by {inviteInfo.invitedBy}
+                You were invited to{" "}
+                <span className="font-medium">{inviteInfo.tenantName}</span> as
+                a <span className="font-medium">{inviteInfo.role}</span> by{" "}
+                {inviteInfo.invitedBy}
               </p>
             )}
             <form onSubmit={onSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
                 <input
                   type="password"
                   value={password}
@@ -136,7 +147,9 @@ export default function AcceptInvitePage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm Password
+                </label>
                 <input
                   type="password"
                   value={confirmPassword}

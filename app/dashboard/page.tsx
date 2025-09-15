@@ -24,7 +24,9 @@ export default function Dashboard() {
   const [noteForm, setNoteForm] = useState({ title: "", content: "" });
   const [inviteForm, setInviteForm] = useState({ email: "", role: "MEMBER" });
   const [inviteLoading, setInviteLoading] = useState(false);
-  const [lastInvitationLink, setLastInvitationLink] = useState<string | null>(null);
+  const [lastInvitationLink, setLastInvitationLink] = useState<string | null>(
+    null
+  );
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -353,7 +355,8 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <p className="text-xs text-blue-700">
-                  Share this link with the invited user. They can set their password and finish signup.
+                  Share this link with the invited user. They can set their
+                  password and finish signup.
                 </p>
               </div>
             )}

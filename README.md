@@ -240,6 +240,7 @@ The application includes CORS headers and proper error handling for automated te
 5. Account is created in the inviter's tenant and they are logged in.
 
 Notes:
+
 - Token expires in 7 days.
 - If the email already exists, invitation is rejected.
 - Environment (optional): set `NEXT_PUBLIC_APP_URL` for correct link domain.
