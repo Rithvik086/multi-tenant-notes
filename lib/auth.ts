@@ -32,11 +32,11 @@ export async function setAuthCookie(token: string) {
 
 // Clear auth cookie (async)
 export async function clearAuthCookie() {
-  const cookieStore = await cookies();
-  cookieStore.delete({
-    name: "auth",
-    path: "/",
-  });
+    const cookieStore = await cookies();
+    cookieStore.delete({
+        name: "auth",
+        path: "/",
+    });
 }
 
 // Get user from cookie (async)
